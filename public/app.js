@@ -2,7 +2,6 @@ class SteamProfilePreviewer {
     constructor() {
         this.form = document.getElementById('previewForm');
         this.profileUrlInput = document.getElementById('profileUrl');
-        this.bgUrlInput = document.getElementById('bgUrl');
         this.previewBtn = document.getElementById('btnPreview');
         this.resetBtn = document.getElementById('btnReset');
         this.iframe = document.getElementById('previewFrame');
@@ -27,26 +26,24 @@ class SteamProfilePreviewer {
         this.zoomRange.addEventListener('input', (e) => this.setScale(parseInt(e.target.value)));
         this.galleryToggle.addEventListener('click', () => this.toggleGallery());
         
-        this.setupCopyButtons();
+        // Auto-preview when profile URL changes and loses focus
+        this.profileUrlInput.addEventListener('blur', () => {
+            if (this.profileUrlInput.value.trim() && this.selectedBgUrl) {
+                this.handlePreview(new Event('submit'));
+            }
+        });
+        
         this.loadSavedData();
         this.loadBackgrounds();
+        
+        // Auto-expand gallery since it's now the main way to select backgrounds
+        setTimeout(() => {
+            this.bgGallery.classList.add('expanded');
+            this.galleryToggle.classList.add('expanded');
+        }, 100);
     }
 
-    setupCopyButtons() {
-        const copyButtons = document.querySelectorAll('.copy-btn');
-        copyButtons.forEach((btn, index) => {
-            btn.addEventListener('click', () => {
-                const input = index === 0 ? this.profileUrlInput : this.bgUrlInput;
-                if (input.value) {
-                    navigator.clipboard.writeText(input.value).then(() => {
-                        this.showToast('URL copied to clipboard!', 'success');
-                    }).catch(() => {
-                        this.showToast('Failed to copy URL', 'error');
-                    });
-                }
-            });
-        });
-    }
+
 
     toggleGallery() {
         const isExpanded = this.bgGallery.classList.contains('expanded');
@@ -130,11 +127,15 @@ class SteamProfilePreviewer {
         // Select current thumbnail
         thumbElement.classList.add('selected');
         
-        // Update input and selected URL
-        this.bgUrlInput.value = bgUrl;
+        // Update selected URL
         this.selectedBgUrl = bgUrl;
         
-        this.showToast('Background selected!', 'success');
+        // Auto-preview when background is selected
+        if (this.profileUrlInput.value.trim()) {
+            this.handlePreview(new Event('submit'));
+        } else {
+            this.showToast('Select a Steam profile URL to preview', 'info');
+        }
     }
 
     setLoading(loading) {
@@ -188,10 +189,15 @@ class SteamProfilePreviewer {
         e.preventDefault();
         
         const profileUrl = this.profileUrlInput.value.trim();
-        const bgUrl = this.bgUrlInput.value.trim();
+        const bgUrl = this.selectedBgUrl;
         
-        if (!profileUrl || !bgUrl) {
-            this.showToast('Please fill in both URLs', 'error');
+        if (!profileUrl) {
+            this.showToast('Please enter a Steam profile URL', 'error');
+            return;
+        }
+        
+        if (!bgUrl) {
+            this.showToast('Please select a background from the gallery', 'error');
             return;
         }
 
@@ -203,17 +209,6 @@ class SteamProfilePreviewer {
             }
         } catch {
             this.showToast('Please enter a valid Steam profile URL', 'error');
-            return;
-        }
-
-        try {
-            const bgUrlObj = new URL(bgUrl);
-            if (!bgUrlObj.protocol.startsWith('http')) {
-                this.showToast('Background URL must use HTTP or HTTPS', 'error');
-                return;
-            }
-        } catch {
-            this.showToast('Please enter a valid background image URL', 'error');
             return;
         }
 
@@ -319,9 +314,8 @@ class SteamProfilePreviewer {
                     console.log('Aplicado via style.setProperty !important');
                 }
 
-                try {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                } catch (e) {}
+                // Removed automatic scrolling behavior
+                // Previously: el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 
                 return el;
             }
@@ -381,34 +375,35 @@ class SteamProfilePreviewer {
 
     saveData() {
         localStorage.setItem('steam-profile-url', this.profileUrlInput.value);
-        localStorage.setItem('steam-bg-url', this.bgUrlInput.value);
+        localStorage.setItem('steam-bg-url', this.selectedBgUrl || '');
         localStorage.setItem('steam-zoom', this.zoomRange.value);
         
-        // Save gallery state
-        const isGalleryExpanded = this.bgGallery.classList.contains('expanded');
-        localStorage.setItem('steam-gallery-expanded', isGalleryExpanded.toString());
+        // Gallery is always expanded now
+        localStorage.setItem('steam-gallery-expanded', 'true');
     }
 
     loadSavedData() {
         const savedProfile = localStorage.getItem('steam-profile-url');
         const savedBg = localStorage.getItem('steam-bg-url');
         const savedZoom = localStorage.getItem('steam-zoom');
-        const galleryExpanded = localStorage.getItem('steam-gallery-expanded') === 'true';
         
         if (savedProfile) this.profileUrlInput.value = savedProfile;
         if (savedBg) {
-            this.bgUrlInput.value = savedBg;
             this.selectedBgUrl = savedBg;
+            
+            // We'll highlight the saved background in the gallery after it loads
+            setTimeout(() => {
+                const thumbs = this.bgGallery.querySelectorAll('.bg-thumb');
+                thumbs.forEach(thumb => {
+                    if (thumb.getAttribute('data-bg-url') === savedBg) {
+                        thumb.classList.add('selected');
+                    }
+                });
+            }, 500);
         }
         if (savedZoom) {
             this.zoomRange.value = savedZoom;
             this.setScale(parseInt(savedZoom));
-        }
-        if (galleryExpanded) {
-            setTimeout(() => {
-                this.bgGallery.classList.add('expanded');
-                this.galleryToggle.classList.add('expanded');
-            }, 100);
         }
     }
 }
