@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steam Profile Background Previewer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+            <h1>Steam BG Previewer</h1>
+        </div>
+        <div class="badge">
+            <span>Demo Tool: Visual preview only</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <form id="previewForm">
+                <div class="input-group">
+                    <label for="profileUrl">Steam Profile URL</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="url" 
+                            id="profileUrl" 
+                            placeholder="https://steamcommunity.com/id/username/"
+                            required
+                            aria-describedby="profile-hint"
+                        >
+                        <button type="button" class="copy-btn" aria-label="Copy profile URL">
+                            <svg viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="profile-hint" class="input-hint">Must be a public Steam profile</div>
+                </div>
+
+                <div class="input-group">
+                    <label for="bgUrl">Background Image URL</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="url" 
+                            id="bgUrl" 
+                            placeholder="https://example.com/image.jpg"
+                            required
+                            aria-describedby="bg-hint"
+                        >
+                        <button type="button" class="copy-btn" aria-label="Copy background URL">
+                            <svg viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="bg-hint" class="input-hint">Direct link to an image file</div>
+                </div>
+
+                <!-- Background Gallery -->
+                <div class="bg-gallery-section">
+                    <label class="gallery-label">
+                        <span>Background Gallery</span>
+                        <button type="button" id="galleryToggle" class="gallery-toggle" aria-label="Toggle gallery">
+                            <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6,9 12,15 18,9"></polyline>
+                            </svg>
+                        </button>
+                    </label>
+                    <div class="bg-gallery" id="bgGallery">
+                        <div class="gallery-loading">Loading backgrounds...</div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" id="btnPreview" class="btn btn-primary">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5,3 19,12 5,21"/>
+                        </svg>
+                        <span>Preview</span>
+                    </button>
+                    
+                    <button type="button" id="btnReset" class="btn btn-danger" disabled>
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                        </svg>
+                        <span>Reset</span>
+                    </button>
+                </div>
+            </form>
+        </aside>
+
+        <main class="preview-area">
+            <div class="preview-card">
+                <div class="preview-header">
+                    <h2>Profile Preview</h2>
+                    <p class="preview-subtitle">Background will be applied with cover sizing to the profile area</p>
+                    
+                    <div class="zoom-control">
+                        <label for="zoomRange">Zoom</label>
+                        <input type="range" id="zoomRange" min="80" max="150" value="80" step="5">
+                        <span id="zoomValue">80%</span>
+                    </div>
+                </div>
+                
+                <div class="preview-content">
+                    <div class="iframe-container">
+                        <iframe 
+                            id="previewFrame" 
+                            sandbox="allow-scripts allow-same-origin"
+                            title="Steam profile preview"
+                        ></iframe>
+                        
+                        <div class="placeholder" id="placeholder">
+                            <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                            </svg>
+                            <h3>Ready to Preview</h3>
+                            <p>Enter your Steam profile URL and background image URL, then click "Preview" to see how it looks.</p>
+                        </div>
+
+                        <div class="skeleton" id="skeleton">
+                            <div class="skeleton-header"></div>
+                            <div class="skeleton-content">
+                                <div class="skeleton-line"></div>
+                                <div class="skeleton-line"></div>
+                                <div class="skeleton-line"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast-container" id="toast"></div>
+    <div aria-live="polite" aria-atomic="true" class="sr-only" id="liveRegion"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
