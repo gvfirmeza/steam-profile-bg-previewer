@@ -2,52 +2,51 @@ class SteamProfilePreviewer {
     constructor() {
         this.form = document.getElementById('previewForm');
         this.profileUrlInput = document.getElementById('profileUrl');
+        this.searchInput = document.getElementById('searchInput');
         this.previewBtn = document.getElementById('btnPreview');
+        this.randomBtn = document.getElementById('btnRandom');
         this.resetBtn = document.getElementById('btnReset');
         this.iframe = document.getElementById('previewFrame');
         this.placeholder = document.getElementById('placeholder');
         this.skeleton = document.getElementById('skeleton');
-        this.zoomRange = document.getElementById('zoomRange');
-        this.zoomValue = document.getElementById('zoomValue');
         this.toastContainer = document.getElementById('toast');
         this.liveRegion = document.getElementById('liveRegion');
         this.bgGallery = document.getElementById('bgGallery');
         this.galleryToggle = document.getElementById('galleryToggle');
-        
+
         this.selectedBgUrl = null;
+        this.selectedBgStoreUrl = null;
         this.backgrounds = [];
-        
+        this.filteredBackgrounds = [];
+
         this.init();
     }
 
     init() {
         this.form.addEventListener('submit', (e) => this.handlePreview(e));
         this.resetBtn.addEventListener('click', () => this.resetBg());
-        this.zoomRange.addEventListener('input', (e) => this.setScale(parseInt(e.target.value)));
+        this.randomBtn.addEventListener('click', () => this.selectRandomBackground());
         this.galleryToggle.addEventListener('click', () => this.toggleGallery());
-        
-        // Auto-preview when profile URL changes and loses focus
+        this.searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
+
         this.profileUrlInput.addEventListener('blur', () => {
             if (this.profileUrlInput.value.trim() && this.selectedBgUrl) {
                 this.handlePreview(new Event('submit'));
             }
         });
-        
+
         this.loadSavedData();
         this.loadBackgrounds();
-        
-        // Auto-expand gallery since it's now the main way to select backgrounds
+
         setTimeout(() => {
             this.bgGallery.classList.add('expanded');
             this.galleryToggle.classList.add('expanded');
         }, 100);
     }
 
-
-
     toggleGallery() {
         const isExpanded = this.bgGallery.classList.contains('expanded');
-        
+
         if (isExpanded) {
             this.bgGallery.classList.remove('expanded');
             this.galleryToggle.classList.remove('expanded');
@@ -57,12 +56,29 @@ class SteamProfilePreviewer {
         }
     }
 
+    handleSearch(query) {
+        const searchTerm = query.toLowerCase().trim();
+
+        if (!searchTerm) {
+            this.filteredBackgrounds = [...this.backgrounds];
+        } else {
+            this.filteredBackgrounds = this.backgrounds.filter(bg => {
+                const titleMatch = bg.title.toLowerCase().includes(searchTerm);
+                const gameMatch = bg.game.toLowerCase().includes(searchTerm);
+                return titleMatch || gameMatch;
+            });
+        }
+
+        this.renderBackgroundGallery();
+    }
+
     async loadBackgrounds() {
         try {
             const response = await fetch('/steam_backgrounds.json');
             if (!response.ok) throw new Error('Failed to load backgrounds');
-            
+
             this.backgrounds = await response.json();
+            this.filteredBackgrounds = [...this.backgrounds];
             this.renderBackgroundGallery();
         } catch (error) {
             console.error('Error loading backgrounds:', error);
@@ -73,22 +89,34 @@ class SteamProfilePreviewer {
     renderBackgroundGallery() {
         const galleryGrid = document.createElement('div');
         galleryGrid.className = 'gallery-grid';
-        
-        this.backgrounds.forEach((bgUrl, index) => {
-            const thumb = this.createBackgroundThumbnail(bgUrl, index);
-            galleryGrid.appendChild(thumb);
-        });
-        
+
+        if (this.filteredBackgrounds.length === 0) {
+            galleryGrid.innerHTML = '<div class="gallery-loading">No backgrounds found</div>';
+        } else {
+            this.filteredBackgrounds.forEach((bg, index) => {
+                const thumb = this.createBackgroundThumbnail(bg, index);
+                galleryGrid.appendChild(thumb);
+            });
+        }
+
         this.bgGallery.innerHTML = '';
         this.bgGallery.appendChild(galleryGrid);
+
+        if (this.selectedBgUrl) {
+            const selected = this.bgGallery.querySelector(`[data-bg-url="${this.selectedBgUrl}"]`);
+            if (selected) {
+                selected.classList.add('selected');
+            }
+        }
     }
 
-    createBackgroundThumbnail(bgUrl, index) {
+    createBackgroundThumbnail(bg, index) {
         const thumb = document.createElement('div');
         thumb.className = 'bg-thumb loading';
-        thumb.setAttribute('data-bg-url', bgUrl);
-        thumb.setAttribute('title', `Background ${index + 1}`);
-        
+        thumb.setAttribute('data-bg-url', bg.img);
+        thumb.setAttribute('data-store-url', bg.url);
+        thumb.setAttribute('title', `${bg.title} - ${bg.game}`);
+
         const img = document.createElement('img');
         img.onload = () => {
             thumb.classList.remove('loading');
@@ -97,44 +125,73 @@ class SteamProfilePreviewer {
             thumb.classList.remove('loading');
             thumb.classList.add('error');
         };
-        img.src = bgUrl;
-        img.alt = `Background ${index + 1}`;
-        
+        img.src = bg.img;
+        img.alt = `${bg.title} - ${bg.game}`;
+
         const overlay = document.createElement('div');
         overlay.className = 'thumb-overlay';
         overlay.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 3h6v6"></path>
-                <path d="M10 14 21 3"></path>
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-            </svg>
+            <div class="bg-info">
+                <div class="bg-title">${bg.title}</div>
+                <div class="bg-game">${bg.game}</div>
+            </div>
+            <div class="overlay-actions">
+                <button class="overlay-btn store-btn" onclick="event.stopPropagation(); window.open('${bg.url}', '_blank')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 8v8m-4-4h8"/>
+                    </svg>
+                    Store
+                </button>
+            </div>
         `;
-        
+
         thumb.appendChild(img);
         thumb.appendChild(overlay);
-        
-        thumb.addEventListener('click', () => this.selectBackground(bgUrl, thumb));
-        
+
+        thumb.addEventListener('click', (e) => {
+            if (!e.target.closest('.store-btn')) {
+                this.selectBackground(bg.img, bg.url, thumb);
+            }
+        });
+
         return thumb;
     }
 
-    selectBackground(bgUrl, thumbElement) {
-        // Remove selection from other thumbnails
+    selectBackground(bgUrl, storeUrl, thumbElement) {
         this.bgGallery.querySelectorAll('.bg-thumb.selected').forEach(thumb => {
             thumb.classList.remove('selected');
         });
-        
-        // Select current thumbnail
+
         thumbElement.classList.add('selected');
-        
-        // Update selected URL
+
         this.selectedBgUrl = bgUrl;
-        
-        // Auto-preview when background is selected
+        this.selectedBgStoreUrl = storeUrl;
+
         if (this.profileUrlInput.value.trim()) {
             this.handlePreview(new Event('submit'));
         } else {
             this.showToast('Select a Steam profile URL to preview', 'info');
+        }
+    }
+
+    selectRandomBackground() {
+        if (this.filteredBackgrounds.length === 0) {
+            this.showToast('No backgrounds available', 'error');
+            return;
+        }
+
+        const randomIndex = Math.floor(Math.random() * this.filteredBackgrounds.length);
+        const randomBg = this.filteredBackgrounds[randomIndex];
+
+        const thumbs = this.bgGallery.querySelectorAll('.bg-thumb');
+        const matchingThumb = Array.from(thumbs).find(thumb =>
+            thumb.getAttribute('data-bg-url') === randomBg.img
+        );
+
+        if (matchingThumb) {
+            matchingThumb.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            this.selectBackground(randomBg.img, randomBg.url, matchingThumb);
         }
     }
 
@@ -143,12 +200,14 @@ class SteamProfilePreviewer {
             this.previewBtn.disabled = true;
             this.previewBtn.querySelector('span').textContent = 'Loading...';
             this.resetBtn.disabled = true;
+            this.randomBtn.disabled = true;
             this.showSkeleton();
             if (this.liveRegion) this.liveRegion.textContent = 'Loading profile preview...';
         } else {
             this.previewBtn.disabled = false;
             this.previewBtn.querySelector('span').textContent = 'Preview';
             this.resetBtn.disabled = false;
+            this.randomBtn.disabled = false;
             this.hideSkeleton();
         }
     }
@@ -163,21 +222,14 @@ class SteamProfilePreviewer {
         this.skeleton.style.display = 'none';
     }
 
-    setScale(percent) {
-        const scale = percent / 100;
-        this.iframe.style.transform = `scale(${scale})`;
-        this.zoomValue.textContent = `${percent}%`;
-        localStorage.setItem('steam-zoom', percent.toString());
-    }
-
     showToast(message, type = 'info') {
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.textContent = message;
-        
+
         this.toastContainer.appendChild(toast);
         if (this.liveRegion) this.liveRegion.textContent = message;
-        
+
         setTimeout(() => {
             if (toast.parentNode) {
                 toast.remove();
@@ -187,15 +239,15 @@ class SteamProfilePreviewer {
 
     async handlePreview(e) {
         e.preventDefault();
-        
+
         const profileUrl = this.profileUrlInput.value.trim();
         const bgUrl = this.selectedBgUrl;
-        
+
         if (!profileUrl) {
             this.showToast('Please enter a Steam profile URL', 'error');
             return;
         }
-        
+
         if (!bgUrl) {
             this.showToast('Please select a background from the gallery', 'error');
             return;
@@ -222,7 +274,7 @@ class SteamProfilePreviewer {
             this.showToast('Fetching Steam profile...', 'info');
 
             const response = await fetch(`/fetch?url=${encodeURIComponent(profileUrl)}`);
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.error || `HTTP ${response.status}`);
@@ -230,7 +282,7 @@ class SteamProfilePreviewer {
 
             const html = await response.text();
             this.displayInIframe(html, bgUrl);
-            
+
             this.showToast('Profile loaded successfully!', 'success');
             this.resetBtn.disabled = false;
 
@@ -245,7 +297,7 @@ class SteamProfilePreviewer {
 
     displayInIframe(html, bgUrl) {
         const backgroundScript = this.createBackgroundScript();
-        
+
         const iframeContent = `
             <!DOCTYPE html>
             <html>
@@ -273,15 +325,11 @@ class SteamProfilePreviewer {
                     }, 100);
                 </script>
             </body>
-            </html>
-        `;
+            </html>`;
 
         this.iframe.srcdoc = iframeContent;
         this.iframe.style.display = 'block';
         this.placeholder.style.display = 'none';
-        
-        const currentZoom = parseInt(this.zoomRange.value);
-        this.setScale(currentZoom);
     }
 
     createBackgroundScript() {
@@ -313,9 +361,6 @@ class SteamProfilePreviewer {
                     el.style.setProperty('background-repeat', 'no-repeat', 'important');
                     console.log('Aplicado via style.setProperty !important');
                 }
-
-                // Removed automatic scrolling behavior
-                // Previously: el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 
                 return el;
             }
@@ -376,22 +421,20 @@ class SteamProfilePreviewer {
     saveData() {
         localStorage.setItem('steam-profile-url', this.profileUrlInput.value);
         localStorage.setItem('steam-bg-url', this.selectedBgUrl || '');
-        localStorage.setItem('steam-zoom', this.zoomRange.value);
-        
-        // Gallery is always expanded now
+        localStorage.setItem('steam-bg-store-url', this.selectedBgStoreUrl || '');
         localStorage.setItem('steam-gallery-expanded', 'true');
     }
 
     loadSavedData() {
         const savedProfile = localStorage.getItem('steam-profile-url');
         const savedBg = localStorage.getItem('steam-bg-url');
-        const savedZoom = localStorage.getItem('steam-zoom');
-        
+        const savedStoreUrl = localStorage.getItem('steam-bg-store-url');
+
         if (savedProfile) this.profileUrlInput.value = savedProfile;
         if (savedBg) {
             this.selectedBgUrl = savedBg;
-            
-            // We'll highlight the saved background in the gallery after it loads
+            this.selectedBgStoreUrl = savedStoreUrl;
+
             setTimeout(() => {
                 const thumbs = this.bgGallery.querySelectorAll('.bg-thumb');
                 thumbs.forEach(thumb => {
@@ -400,10 +443,6 @@ class SteamProfilePreviewer {
                     }
                 });
             }, 500);
-        }
-        if (savedZoom) {
-            this.zoomRange.value = savedZoom;
-            this.setScale(parseInt(savedZoom));
         }
     }
 }

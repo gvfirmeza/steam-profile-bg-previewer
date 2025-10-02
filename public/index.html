@@ -34,14 +34,21 @@
                             required
                             aria-describedby="profile-hint"
                         >
-
                     </div>
                     <div id="profile-hint" class="input-hint">Must be a public Steam profile</div>
                 </div>
 
+                <div class="input-group">
+                    <label for="searchInput">Search Backgrounds</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Search by title or game..."
+                        >
+                    </div>
+                </div>
 
-
-                <!-- Background Gallery -->
                 <div class="bg-gallery-section">
                     <label class="gallery-label">
                         <span>Background Gallery</span>
@@ -64,6 +71,16 @@
                         <span>Preview</span>
                     </button>
                     
+                    <button type="button" id="btnRandom" class="btn btn-secondary">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 4L22 8L18 12"/>
+                            <path d="M6 20L2 16L6 12"/>
+                            <path d="M22 8H12C8.5 8 6 10.5 6 14"/>
+                            <path d="M2 16H12C15.5 16 18 13.5 18 10"/>
+                        </svg>
+                        <span>Random BG</span>
+                    </button>
+                    
                     <button type="button" id="btnReset" class="btn btn-danger" disabled>
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M3 6h18"/>
@@ -81,12 +98,6 @@
                 <div class="preview-header">
                     <h2>Profile Preview</h2>
                     <p class="preview-subtitle">Background will be applied with cover sizing to the profile area</p>
-                    
-                    <div class="zoom-control">
-                        <label for="zoomRange">Zoom</label>
-                        <input type="range" id="zoomRange" min="80" max="150" value="80" step="5">
-                        <span id="zoomValue">80%</span>
-                    </div>
                 </div>
                 
                 <div class="preview-content">
