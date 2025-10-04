@@ -97,8 +97,16 @@
         <main class="preview-area">
             <div class="preview-card">
                 <div class="preview-header">
-                    <h2>Profile Preview</h2>
-                    <p class="preview-subtitle">Background will be applied with cover sizing to the profile area</p>
+                    <div class="preview-title-section">
+                        <h2>Profile Preview</h2>
+                        <p class="preview-subtitle">Background will be applied with cover sizing to the profile area</p>
+                    </div>
+                    <div class="zoom-controls">
+                        <label for="zoomRange" class="zoom-label">Zoom:</label>
+                        <input type="range" id="zoomRange" class="zoom-slider" min="80" max="150" value="100" step="10">
+                        <span id="zoomValue" class="zoom-value">100%</span>
+                        <button id="resetZoom" class="btn-zoom-reset" title="Reset zoom">⟲</button>
+                    </div>
                 </div>
                 
                 <div class="preview-content">

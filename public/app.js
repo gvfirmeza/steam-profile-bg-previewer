@@ -13,6 +13,9 @@ class SteamProfilePreviewer {
         this.liveRegion = document.getElementById('liveRegion');
         this.bgGallery = document.getElementById('bgGallery');
         this.galleryToggle = document.getElementById('galleryToggle');
+        this.zoomSlider = document.getElementById('zoomRange');
+        this.zoomValue = document.getElementById('zoomValue');
+        this.resetZoomBtn = document.getElementById('resetZoom');
 
         this.selectedBgUrl = null;
         this.selectedBgStoreUrl = null;
@@ -28,6 +31,8 @@ class SteamProfilePreviewer {
         this.randomBtn.addEventListener('click', () => this.selectRandomBackground());
         this.galleryToggle.addEventListener('click', () => this.toggleGallery());
         this.searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
+        this.zoomSlider.addEventListener('input', (e) => this.handleZoom(e.target.value));
+        this.resetZoomBtn.addEventListener('click', () => this.resetZoom());
 
         this.profileUrlInput.addEventListener('blur', () => {
             if (this.profileUrlInput.value.trim() && this.selectedBgUrl) {
@@ -37,6 +42,7 @@ class SteamProfilePreviewer {
 
         this.loadSavedData();
         this.loadBackgrounds();
+        this.loadZoomLevel();
 
         setTimeout(() => {
             this.bgGallery.classList.add('expanded');
@@ -53,6 +59,33 @@ class SteamProfilePreviewer {
         } else {
             this.bgGallery.classList.add('expanded');
             this.galleryToggle.classList.add('expanded');
+        }
+    }
+
+    handleZoom(value) {
+        const zoomLevel = parseInt(value) / 100;
+        this.zoomValue.textContent = `${value}%`;
+        
+        if (this.iframe.style.display !== 'none') {
+            this.iframe.style.transform = `scale(${zoomLevel})`;
+            this.saveZoomLevel(value);
+        }
+    }
+
+    resetZoom() {
+        this.zoomSlider.value = 100;
+        this.handleZoom(100);
+    }
+
+    saveZoomLevel(level) {
+        localStorage.setItem('steam-zoom-level', level);
+    }
+
+    loadZoomLevel() {
+        const savedZoom = localStorage.getItem('steam-zoom-level');
+        if (savedZoom) {
+            this.zoomSlider.value = savedZoom;
+            this.handleZoom(savedZoom);
         }
     }
 
@@ -330,6 +363,12 @@ class SteamProfilePreviewer {
         this.iframe.srcdoc = iframeContent;
         this.iframe.style.display = 'block';
         this.placeholder.style.display = 'none';
+        
+        // Apply current zoom level
+        const currentZoom = this.zoomSlider.value;
+        if (currentZoom !== '100') {
+            this.handleZoom(currentZoom);
+        }
     }
 
     createBackgroundScript() {
