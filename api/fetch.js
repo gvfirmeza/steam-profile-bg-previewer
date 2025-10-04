@@ -1,15 +1,4 @@
-const express = require('express');
-const cors = require('cors');
 const sanitizeHtml = require('sanitize-html');
-const fetch = require('node-fetch');
-const path = require('path');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(cors());
-app.use(express.static(path.join(__dirname, '../')));
 
 // Sanitization configuration
 const sanitizeOptions = {
@@ -29,9 +18,8 @@ const sanitizeOptions = {
   },
   allowedSchemes: ['http', 'https', 'data'],
   disallowedTagsMode: 'discard',
-  // Remove dangerous attributes
   transformTags: {
-    'script': 'div', // Convert scripts to divs
+    'script': 'div',
     'iframe': 'div',
     'object': 'div',
     'embed': 'div',
@@ -39,12 +27,23 @@ const sanitizeOptions = {
   }
 };
 
-// Proxy endpoint
-app.get('/fetch', async (req, res) => {
+export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
     const { url } = req.query;
     
-    // Validate URL
     if (!url) {
       return res.status(400).json({ error: 'URL parameter is required' });
     }
@@ -56,20 +55,16 @@ app.get('/fetch', async (req, res) => {
       return res.status(400).json({ error: 'Invalid URL format' });
     }
 
-    // Whitelist only steamcommunity.com
     if (steamUrl.hostname !== 'steamcommunity.com') {
       return res.status(400).json({ error: 'Only steamcommunity.com URLs are allowed' });
     }
 
     console.log('Fetching:', steamUrl.toString());
 
-    // Fetch the Steam profile
     const response = await fetch(steamUrl.toString(), {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      },
-      timeout: 10000, // 10 second timeout
-      size: 4 * 1024 * 1024 // 4MB limit
+      }
     });
 
     if (!response.ok) {
@@ -97,11 +92,6 @@ app.get('/fetch', async (req, res) => {
       );
     }
 
-    // Remove problematic headers and return sanitized HTML
-    res.removeHeader('x-frame-options');
-    res.removeHeader('content-security-policy');
-    res.removeHeader('x-content-type-options');
-    
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
 
@@ -112,13 +102,4 @@ app.get('/fetch', async (req, res) => {
       details: error.message 
     });
   }
-});
-
-// Serve backgrounds JSON
-app.get('/steam_backgrounds.json', (req, res) => {
-    res.sendFile(path.join(__dirname, '../steam_backgrounds.json'));
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+}

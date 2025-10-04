@@ -11,7 +11,7 @@ import sys
 
 CHROME_BINARY = r"D:\DEV\chrome-win64\chrome.exe"
 URL = "https://store.steampowered.com/points/shop/c/backgrounds/cluster/3"
-SAIDA_JSON = "steam_backgrounds.json"
+OUTPUT_JSON = "../steam_backgrounds.json"  # Output to root instead of public
 
 def make_driver():
     options = Options()
@@ -195,10 +195,10 @@ def main():
         driver.get(URL)
         resultados = coletar_imagens_profilebackground(driver)
         
-        with open(SAIDA_JSON, "w", encoding="utf-8") as f:
+        with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
             json.dump(resultados, f, indent=4, ensure_ascii=False)
         
-        print(f"✅ {len(resultados)} imagens salvas em {SAIDA_JSON}")
+        print(f"✅ {len(resultados)} imagens salvas em {OUTPUT_JSON}")
     finally:
         driver.quit()
 
