@@ -21,6 +21,9 @@ class SteamProfilePreviewer {
         this.selectedBgStoreUrl = null;
         this.backgrounds = [];
         this.filteredBackgrounds = [];
+        
+        // Detect API endpoint based on environment
+        this.apiEndpoint = this.getApiEndpoint();
 
         this.init();
     }
@@ -87,6 +90,15 @@ class SteamProfilePreviewer {
             this.zoomSlider.value = savedZoom;
             this.handleZoom(savedZoom);
         }
+    }
+
+    getApiEndpoint() {
+        // Detect if running on localhost (development) or production
+        const isLocal = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.hostname.includes('localhost');
+        
+        return isLocal ? '/fetch' : '/api/fetch';
     }
 
     handleSearch(query) {
@@ -306,7 +318,7 @@ class SteamProfilePreviewer {
             this.setLoading(true);
             this.showToast('Fetching Steam profile...', 'info');
 
-            const response = await fetch(`/api/fetch?url=${encodeURIComponent(profileUrl)}`);
+            const response = await fetch(`${this.apiEndpoint}?url=${encodeURIComponent(profileUrl)}`);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));

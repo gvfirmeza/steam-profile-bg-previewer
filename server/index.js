@@ -31,7 +31,10 @@ const sanitizeOptions = {
   disallowedTagsMode: 'discard',
   // Remove dangerous attributes
   transformTags: {
-    'script': 'div', // Convert scripts to divs
+    'script': function() {
+      // Remove completamente, não converte para div
+      return false;
+    },
     'iframe': 'div',
     'object': 'div',
     'embed': 'div',
@@ -80,33 +83,25 @@ app.get('/fetch', async (req, res) => {
 
     let html = await response.text();
     
-    // Remove dangerous elements and attributes
-    html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-    html = html.replace(/on\w+\s*=\s*["'][^"']*["']/gi, '');
-    html = html.replace(/javascript:/gi, '');
-    html = html.replace(/<meta\s+http-equiv\s*=\s*["']refresh["'][^>]*>/gi, '');
+    // Remove scripts ANTES do sanitizador para evitar que virem texto
+    const cleanHtml = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
     
     // Sanitize HTML
-    html = sanitizeHtml(html, sanitizeOptions);
+    const sanitizedHtml = sanitizeHtml(cleanHtml, sanitizeOptions);
     
     // Add base tag if not present
-    if (!html.includes('<base')) {
-      html = html.replace(
+    let finalHtml = sanitizedHtml;
+    if (!sanitizedHtml.includes('<base')) {
+      finalHtml = sanitizedHtml.replace(
         /<head>/i, 
         '<head><base href="https://steamcommunity.com/">'
       );
     }
-
-    // Remove problematic headers and return sanitized HTML
-    res.removeHeader('x-frame-options');
-    res.removeHeader('content-security-policy');
-    res.removeHeader('x-content-type-options');
     
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
+    res.send(finalHtml);
 
   } catch (error) {
-    console.error('Fetch error:', error);
     res.status(500).json({ 
       error: 'Failed to fetch profile', 
       details: error.message 
