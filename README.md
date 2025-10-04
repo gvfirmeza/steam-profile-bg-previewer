@@ -1,52 +1,56 @@
-# Steam Profile Background Previewer
+# Steam BG Previewer
 
-Preview Steam profile backgrounds before you apply them.
+**Preview Steam profile backgrounds before purchasing them.**
 
-## What it does
+## The Problem
 
-* Instant profile preview with your chosen background
-* Built-in gallery with hundreds of images
-* Zoom control (80%–150%)
-* Remembers your last choices (local storage)
-* Responsive dark UI
+Ever wanted to buy a Steam profile background but couldn't see how it would look on your actual profile? Steam doesn't provide a preview feature, so you're left guessing whether a background will complement your profile layout, badges, and content.
 
-## Run
+This tool solves that problem by letting you preview any Steam background on your real profile before making a purchase decision.
 
-```bash
-# Requires Node.js 14+
-git clone https://github.com/yourusername/steam-profile-bg-previewer.git
-cd steam-profile-bg-previewer
-npm install
-npm start
-# open: http://localhost:3000
-```
+## Features
 
-## Use
+- **Live Profile Preview**: See backgrounds applied to your actual Steam profile
+- **Extensive Gallery**: Browse hundreds of available Steam backgrounds
+- **Smart Search**: Filter backgrounds by game title or background name  
+- **Zoom Controls**: Adjust preview size (80%–150%) for better inspection
+- **Memory**: Remembers your last profile URL and selected background
+- **Safe & Secure**: No login required, read-only profile access
+- **Responsive Design**: Works perfectly on desktop and mobile
 
-1. Paste your public Steam profile URL.
-2. Pick a background:
+## How It Works
 
-   * Paste a direct image URL, or
-   * Open the gallery and select one.
-3. Click **Preview** and adjust the zoom if needed.
+1. **Enter your public Steam profile URL**
+2. **Choose a background** from the gallery or paste a direct image URL
+3. **Click Preview** to see how it looks on your actual profile
+4. **Use zoom controls** to inspect details
+5. **Visit the Steam store** to purchase backgrounds you like
 
-## Tips
+## Live Demo
 
-* The gallery reads from `public/steam_backgrounds.json`.
-* To refresh the gallery list, run `scripts/scrapper.py` and replace the JSON in `public/`.
+🌐 **[Try it now](https://steam-profile-bg-previewer.vercel.app)**
 
-## Structure
+## Technical Details
 
-```
-public/
-  app.js
-  styles.css
-  index.html
-  steam_backgrounds.json
-server/
-  index.js
-scripts/
-  scrapper.py
-```
+Built with vanilla JavaScript and deployed on Vercel for global performance. The tool fetches your public Steam profile, sanitizes the content for security, and applies background previews client-side.
 
-> Preview only. This does not change your Steam profile.
+- **Frontend**: Vanilla JS, CSS3, HTML5
+- **Backend**: Node.js serverless functions
+- **Deployment**: Vercel Edge Network
+- **Security**: HTML sanitization, CORS protection
+
+## Privacy & Security
+
+- No data collection or storage
+- No Steam login required
+- Only accesses public profile information
+- All processing happens in your browser
+- No tracking or analytics
+
+## Contributing
+
+Background data is maintained in `public/steam_backgrounds.json`. To update the gallery, run the scraper script and submit a pull request.
+
+---
+
+**Note**: This is a preview tool only. It does not modify your Steam profile in any way.
