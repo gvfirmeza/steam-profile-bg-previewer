@@ -273,7 +273,7 @@ class SteamProfilePreviewer {
             this.setLoading(true);
             this.showToast('Fetching Steam profile...', 'info');
 
-            const response = await fetch(`/fetch?url=${encodeURIComponent(profileUrl)}`);
+            const response = await fetch(`/api/fetch?url=${encodeURIComponent(profileUrl)}`);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));

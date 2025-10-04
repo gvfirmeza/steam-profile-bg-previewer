@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/steam_backgrounds.json",
+      "destination": "/steam_backgrounds.json"
+    }
+  ]
+}
